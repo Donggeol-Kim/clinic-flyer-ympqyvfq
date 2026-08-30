@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>이벤트 포스터 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --panel-bg:#15161a; --panel-bg2:#1c1e24; --panel-line:#2b2e36;
+    --ink:#eceef2; --ink-soft:#9aa0ac; --accent-ui:#d97757;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Noto Sans KR',sans-serif;
+    background:var(--panel-bg);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .app{
+    display:flex; flex-direction:column;
+    min-height:100vh;
+  }
+  @media (min-width:900px){
+    .app{ flex-direction:row; }
+  }
+  /* ---------- CONTROL PANEL ---------- */
+  .panel{
+    background:var(--panel-bg2);
+    border-bottom:1px solid var(--panel-line);
+    padding:20px 18px 28px;
+    width:100%;
+  }
+  @media (min-width:900px){
+    .panel{ width:380px; min-width:340px; max-width:420px; height:100vh; overflow-y:auto; border-bottom:none; border-right:1px solid var(--panel-line); }
+  }
+  .panel h1{
+    font-size:16px; font-weight:700; margin:0 0 2px; letter-spacing:-0.01em;
+  }
+  .panel .sub{
+    font-size:12px; color:var(--ink-soft); margin:0 0 20px; line-height:1.5;
+  }
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:11.5px; font-weight:600; color:var(--ink-soft);
+    margin-bottom:6px; letter-spacing:0.02em; text-transform:uppercase;
+  }
+  .field input[type=text], .field textarea, .field select{
+    width:100%; background:#0f1013; border:1px solid var(--panel-line);
+    color:var(--ink); border-radius:8px; padding:9px 10px; font-size:13px;
+    font-family:'Noto Sans KR',sans-serif; resize:vertical;
+  }
+  .field textarea{
+    min-height:260px; line-height:1.55; font-size:12.5px;
+    font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+    white-space:pre;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{
+    outline:none; border-color:var(--accent-ui);
+  }
+  .row2{ display:flex; gap:8px; }
+  .row2 > .field{ flex:1; }
+
+  .theme-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+  .theme-swatch{
+    aspect-ratio:1/1; border-radius:8px; border:2px solid transparent;
+    cursor:pointer; position:relative; overflow:hidden;
+  }
+  .theme-swatch.active{ border-color:var(--accent-ui); }
+  .theme-swatch span{
+    position:absolute; bottom:2px; left:0; right:0; text-align:center;
+    font-size:8px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); font-weight:600;
+  }
+  .sw-warm{ background:linear-gradient(135deg,#f4ecdf,#e7c793); }
+  .sw-mono{ background:linear-gradient(135deg,#fafafa 45%,#c9c9c9 75%,#1f3a5f 100%); }
+  .sw-pastel{ background:linear-gradient(135deg,#f8f1f0,#e0c7cb); }
+  .sw-dark{ background:linear-gradient(135deg,#1b2230,#0c0f16); }
+  .sw-editorial{ background:linear-gradient(135deg,#f6f3ea,#efe9d8); }
+  .sw-clinical{ background:linear-gradient(135deg,#eef3f6,#9fbccd); }
+  .sw-coral{ background:linear-gradient(135deg,#fdf6f1,#e05a3c); }
+  .sw-botanical{ background:linear-gradient(135deg,#f6f5ef,#8ea179); }
+  .sw-labnote{ background:linear-gradient(135deg,#fbfaf6 55%,#e8c9c5 80%,#b33a2e 100%); }
+  .sw-burgundy{ background:linear-gradient(135deg,#f8f2ee,#6e2438); }
+  .sw-none{
+    background-image:
+      linear-gradient(45deg,#bbb 25%,transparent 25%),
+      linear-gradient(-45deg,#bbb 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#bbb 75%),
+      linear-gradient(-45deg,transparent 75%,#bbb 75%);
+    background-size:10px 10px; background-position:0 0,0 5px,5px -5px,-5px 0px;
+    background-color:#fff;
+  }
+
+  .layout-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .layout-btn{
+    flex:1; background:#0f1013; border:1px solid var(--panel-line); border-radius:8px;
+    padding:11px 4px; font-size:11.5px; font-weight:600; color:var(--ink-soft);
+    text-align:center; cursor:pointer;
+  }
+  .layout-btn.active{ border-color:var(--accent-ui); color:var(--ink); }
+
+  details.help{
+    background:#0f1013; border:1px solid var(--panel-line); border-radius:8px;
+    padding:10px 12px; margin-bottom:16px;
+  }
+  details.help summary{ font-size:12px; font-weight:600; cursor:pointer; color:var(--ink); }
+  details.help .help-body{ font-size:11.5px; color:var(--ink-soft); line-height:1.7; margin-top:8px; }
+  details.help code{
+    background:#1c1e24; padding:1px 5px; border-radius:4px; color:#f2b28c; font-size:11px;
+  }
+  details.help pre{
+    background:#1c1e24; padding:8px 10px; border-radius:6px; overflow-x:auto;
+    font-size:10.5px; line-height:1.6; color:#c8cdd6; margin:6px 0 0;
+  }
+
+  .btnbar{ display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  button{
+    font-family:inherit; cursor:pointer; border:none; border-radius:9px;
+    font-weight:600; font-size:13px; padding:11px 14px; transition:opacity .15s, transform .1s;
+  }
+  button:active{ transform:scale(0.97); }
+  .btn-primary{ background:var(--accent-ui); color:#1b1108; flex:1 1 100%; }
+  .btn-ghost{ background:#22242b; color:var(--ink); flex:1; }
+  .btn-ghost:hover{ background:#292c34; }
+  .export-row{ display:flex; gap:8px; margin-top:8px; }
+
+  /* ---------- PREVIEW STAGE ---------- */
+  .stage-wrap{
+    flex:1; display:flex; align-items:flex-start; justify-content:center;
+    padding:32px 16px 60px; overflow:auto;
+  }
+  .stage-inner{ display:flex; flex-direction:column; align-items:center; }
+  .stage-caption{
+    font-size:11.5px; color:var(--ink-soft); margin-bottom:14px; text-align:center; line-height:1.6;
+  }
+  .stage-caption b{ color:var(--ink); }
+  .preview-stage{
+    position:relative;
+    background-image:
+      linear-gradient(45deg,#3a3a40 25%,transparent 25%),
+      linear-gradient(-45deg,#3a3a40 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#3a3a40 75%),
+      linear-gradient(-45deg,transparent 75%,#3a3a40 75%);
+    background-size:20px 20px; background-position:0 0,0 10px,10px -10px,-10px 0px;
+    background-color:#26272c;
+  }
+  .preview-zoom{ transform-origin: top left; }
+
+  /* ================= CARD BASE (660 x 700 px intrinsic) ================= */
+  .card{
+    width:700px; height:990px; position:relative; overflow:hidden;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,.5);
+    display:flex; flex-direction:column;
+  }
+  .brand{ display:flex; align-items:center; gap:8px; }
+  .brand-mark{
+    width:32px; height:32px; border-radius:50%; border:1.6px solid currentColor;
+    display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700;
+    flex-shrink:0;
+  }
+  .brand-name{ font-size:15px; letter-spacing:0.08em; font-weight:600; }
+
+  .header{ padding:40px 52px 0 44px; flex-shrink:0; }
+  .head-top{ display:flex; justify-content:space-between; align-items:baseline; margin-top:32px; }
+  .event-badge{
+    font-size:17px; font-weight:800; letter-spacing:0.03em; padding:4px 0;
+  }
+  .period{ font-size:15px; font-weight:600; letter-spacing:0.02em; white-space:nowrap; }
+  .title{ font-size:34px; font-weight:800; line-height:1.16; margin:12px 0 0; letter-spacing:-0.025em; }
+
+  .divider-main{ border:none; height:1px; margin:20px 52px 0 44px; flex-shrink:0; }
+
+  .body-content{
+    padding:24px 52px 8px 44px; flex:1; overflow:hidden; font-size:20px; letter-spacing:-0.012em;
+  }
+  .list{ display:flex; flex-direction:column; }
+  .item{ margin-bottom:1.15em; }
+  .item-name{ font-size:1.12em; font-weight:700; line-height:1.3; letter-spacing:-0.02em; display:flex; flex-wrap:wrap; gap:0.3em 0.4em; align-items:baseline; }
+  .tag{ font-weight:600; }
+  .rows{ margin-top:0.35em; display:flex; flex-direction:column; gap:0.18em; }
+  .row{ display:flex; align-items:baseline; gap:0.7em; font-size:0.98em; }
+  .row-label{ font-weight:600; font-size:0.86em; min-width:2.6em; flex-shrink:0; }
+  .row-prices{ display:flex; align-items:baseline; gap:0.6em; margin-left:auto; }
+  .price-original{ text-decoration:line-through; font-weight:500; opacity:0.55; font-size:0.92em; }
+  .price-sale{ font-weight:800; font-size:1.3em; }
+
+  .divider-mid{ border:none; height:1px; margin:0.6em 0 1.1em; }
+
+  table.price-table{ width:100%; border-collapse:collapse; margin:0.4em 0 1em; font-size:0.95em; }
+  table.price-table th, table.price-table td{ padding:0.42em 0.3em; text-align:left; }
+  table.price-table th{ font-weight:700; font-size:0.85em; }
+  table.price-table td.name-cell{ font-weight:600; }
+  table.price-table td.val-cell{ font-weight:800; text-align:right; font-variant-numeric:tabular-nums; }
+  table.price-table th.val-head{ text-align:right; }
+
+  .footer-notes{ padding:0 52px 28px 44px; flex-shrink:0; }
+  .footer-notes div{ font-size:11.5px; line-height:1.7; opacity:0.75; }
+
+  /* ================= THEME: WARM SIGNATURE ================= */
+  .theme-warm{ background:linear-gradient(160deg,#f7f1e4 0%,#f0e4cd 55%,#e9dcc0 100%); color:#3a2f22; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#fffaf0; --item-shadow:rgba(140,100,40,.18); --divider-soft:#d8c7a4; }
+  .theme-warm .header{ font-family:'Noto Serif KR',serif; }
+  .theme-warm .brand{ color:#a9762f; }
+  .theme-warm .brand-mark{ border-color:#c9964a; color:#a9762f; font-family:'Noto Serif KR',serif;}
+  .theme-warm .event-badge{ color:#b9773a; font-family:'Noto Sans KR',sans-serif; }
+  .theme-warm .period{ color:#8a6b3d; }
+  .theme-warm .title{ font-family:'Noto Serif KR',serif; color:#33291c; }
+  .theme-warm .divider-main{ background:linear-gradient(90deg,#c9964a,transparent 90%); }
+  .theme-warm .item-name{ color:#3a2f22; }
+  .theme-warm .tag{ color:#b9773a; }
+  .theme-warm .row-label{ color:#8a6b3d; }
+  .theme-warm .price-original{ color:#8a7256; }
+  .theme-warm .price-sale{ color:#c1793a; }
+  .theme-warm .divider-mid{ background:#d8c7a4; }
+  .theme-warm table.price-table th{ color:#8a6b3d; border-bottom:1px solid #d8c7a4; }
+  .theme-warm table.price-table td{ border-bottom:1px solid #e6d9bd; }
+  .theme-warm table.price-table td.val-cell{ color:#c1793a; }
+  .theme-warm .footer-notes div{ color:#6b5a3f; }
+
+  /* ================= THEME: MINIMAL MONO ================= */
+  .theme-mono{ background:#fdfdfc; color:#111214; font-family:'Noto Sans KR',sans-serif; }
+  .theme-mono{ background:#fdfdfc; color:#111214; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#ffffff; --item-shadow:rgba(0,0,0,.10); --divider-soft:#c7c9ce; position:relative; }
+  .theme-mono.card::before{
+    content:''; position:absolute; inset:20px; pointer-events:none;
+    background:
+      linear-gradient(#111214,#111214) top left / 12px 1.4px no-repeat,
+      linear-gradient(#111214,#111214) top left / 1.4px 12px no-repeat,
+      linear-gradient(#111214,#111214) top right / 12px 1.4px no-repeat,
+      linear-gradient(#111214,#111214) top right / 1.4px 12px no-repeat,
+      linear-gradient(#111214,#111214) bottom left / 12px 1.4px no-repeat,
+      linear-gradient(#111214,#111214) bottom left / 1.4px 12px no-repeat,
+      linear-gradient(#111214,#111214) bottom right / 12px 1.4px no-repeat,
+      linear-gradient(#111214,#111214) bottom right / 1.4px 12px no-repeat;
+  }
+  .theme-mono .header{ padding-top:30px; }
+  .theme-mono .brand{ color:#111214; }
+  .theme-mono .brand-mark{ border-radius:2px; border-color:#111214; }
+  .theme-mono .event-badge{ font-family:'Space Grotesk',sans-serif; color:#111214; border-bottom:2px solid #111214; padding-bottom:4px; }
+  .theme-mono .period{ font-family:'Space Grotesk',sans-serif; color:#6b6f76; }
+  .theme-mono .title{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:#111214; }
+  .theme-mono .divider-main{ background:#111214; height:1px; }
+  .theme-mono .item{ border-bottom:1px solid #e4e5e8; padding-bottom:0.9em; }
+  .theme-mono .item-name{ color:#111214; font-weight:600; }
+  .theme-mono .tag{ color:#1f3a5f; font-weight:600; }
+  .theme-mono .row-label{ color:#9a9ea5; }
+  .theme-mono .price-original{ color:#9a9ea5; }
+  .theme-mono .price-sale{ color:#1f3a5f; font-family:'Space Grotesk',sans-serif; font-variant-numeric:tabular-nums; }
+  .theme-mono .divider-mid{ background:#111214; }
+  .theme-mono table.price-table th{ color:#9a9ea5; border-bottom:1px solid #111214; }
+  .theme-mono table.price-table td{ border-bottom:1px solid #e4e5e8; }
+  .theme-mono table.price-table td.val-cell{ color:#1f3a5f; font-family:'Space Grotesk',sans-serif; }
+  .theme-mono .footer-notes div{ color:#9a9ea5; }
+
+  /* ================= THEME: MODERN BLUSH (formerly Soft Pastel) ================= */
+  .theme-pastel{ background:linear-gradient(160deg,#f8f1f0 0%,#f3e8e7 55%,#eee0e2 100%); color:#3f3237; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#ffffff; --item-shadow:rgba(150,90,110,.18); --divider-soft:#e6d2d8; }
+  .theme-pastel .brand{ color:#a8677a; }
+  .theme-pastel .brand-mark{ border-color:#a8677a; background:#fff; color:#a8677a; }
+  .theme-pastel .header{ font-family:'Noto Serif KR',serif; }
+  .theme-pastel .event-badge{ color:#a8677a; font-style:italic; font-weight:600; letter-spacing:0.02em; font-size:14px; }
+  .theme-pastel .period{ font-family:'Noto Sans KR',sans-serif; color:#8a7a7c; }
+  .theme-pastel .title{ font-family:'Noto Serif KR',serif; font-style:italic; color:#2f2529; font-weight:700; }
+  .theme-pastel .divider-main{ background:#e6d2d8; }
+  .theme-pastel .item-name{ color:#3f3237; }
+  .theme-pastel .tag{ color:#a8677a; font-weight:600; }
+  .theme-pastel .row-label{ color:#9c8286; font-weight:600; font-size:0.86em; }
+  .theme-pastel .price-original{ color:#b7a4a8; }
+  .theme-pastel .price-sale{ color:#a8677a; }
+  .theme-pastel .divider-mid{ background:#e6d2d8; }
+  .theme-pastel table.price-table th{ color:#8a7a7c; border-bottom:1px solid #e6d2d8; }
+  .theme-pastel table.price-table td{ border-bottom:1px solid #f0e1e3; }
+  .theme-pastel table.price-table td.val-cell{ color:#a8677a; }
+  .theme-pastel .footer-notes div{ color:#9c8286; }
+
+  /* ================= THEME: DARK LUXURY ================= */
+  .theme-dark{ background:radial-gradient(120% 100% at 50% 0%,#232a3a 0%,#12151d 60%,#0b0d12 100%); color:#e9e5da; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#1a1f2b; --item-shadow:rgba(0,0,0,.4); --divider-soft:#2c3140; }
+  .theme-dark .header{ font-family:'Noto Serif KR',serif; }
+  .theme-dark .brand{ color:#c9a869; }
+  .theme-dark .brand-mark{ border-color:#c9a869; color:#c9a869; font-family:'Noto Serif KR',serif; }
+  .theme-dark .event-badge{ color:#c9a869; letter-spacing:0.14em; font-size:12.5px; }
+  .theme-dark .period{ color:#8d94a6; }
+  .theme-dark .title{ font-family:'Noto Serif KR',serif; color:#f3efe4; font-weight:700; }
+  .theme-dark .divider-main{ background:linear-gradient(90deg,#c9a869,transparent 85%); }
+  .theme-dark .item-name{ color:#f3efe4; }
+  .theme-dark .tag{ color:#c9a869; }
+  .theme-dark .row-label{ color:#8d94a6; }
+  .theme-dark .price-original{ color:#6b7280; }
+  .theme-dark .price-sale{ color:#e7c383; }
+  .theme-dark .divider-mid{ background:#2c3140; }
+  .theme-dark table.price-table th{ color:#8d94a6; border-bottom:1px solid #3a4054; }
+  .theme-dark table.price-table td{ border-bottom:1px solid #262b38; }
+  .theme-dark table.price-table td.val-cell{ color:#e7c383; }
+  .theme-dark .footer-notes div{ color:#6b7280; }
+
+  /* ================= THEME: EDITORIAL MAGAZINE ================= */
+  .theme-editorial{ background:#f6f2e7; color:#20201c; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#fffdf7; --item-shadow:rgba(0,0,0,.08); --divider-soft:#b9b3a2; }
+  .theme-editorial .header{ padding-top:30px; border-bottom:none; }
+  .theme-editorial .brand{ color:#20201c; text-transform:uppercase; }
+  .theme-editorial .brand-mark{ display:none; }
+  .theme-editorial .brand-name{ font-size:11px; letter-spacing:0.28em; border-bottom:1px solid #20201c; padding-bottom:4px; }
+  .theme-editorial .event-badge{ font-family:'Noto Serif KR',serif; font-style:italic; font-weight:600; color:#8a5a3a; }
+  .theme-editorial .period{ font-family:'Space Grotesk',sans-serif; color:#5c5850; }
+  .theme-editorial .title{ font-family:'Noto Serif KR',serif; font-weight:900; letter-spacing:-0.015em; color:#181812; }
+  .theme-editorial .divider-main{ background:#20201c; height:1.2px; margin-top:14px; }
+  .theme-editorial .item{ border-bottom:1px dotted #b9b3a2; padding-bottom:0.75em; }
+  .theme-editorial .item-name{ color:#20201c; }
+  .theme-editorial .tag{ font-style:italic; color:#8a5a3a; font-weight:500; }
+  .theme-editorial .row-label{ color:#8a8578; font-family:'Space Grotesk',sans-serif; }
+  .theme-editorial .price-original{ color:#a39d8c; }
+  .theme-editorial .price-sale{ color:#8a5a3a; font-family:'Space Grotesk',sans-serif; }
+  .theme-editorial .divider-mid{ background:#20201c; height:1px; }
+  .theme-editorial table.price-table th{ font-family:'Space Grotesk',sans-serif; color:#8a8578; border-bottom:1px solid #20201c; }
+  .theme-editorial table.price-table td{ border-bottom:1px dotted #b9b3a2; }
+  .theme-editorial table.price-table td.val-cell{ color:#8a5a3a; font-family:'Space Grotesk',sans-serif; }
+  .theme-editorial .footer-notes div{ color:#8a8578; }
+
+  /* ================= THEME: CLINICAL BLUE ================= */
+  .theme-clinical{ background:#f2f6f8; color:#1c2b36; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#ffffff; --item-shadow:rgba(30,70,100,.12); --divider-soft:#c9d6de; }
+  .theme-clinical .header{ font-family:'Space Grotesk',sans-serif; }
+  .theme-clinical .brand{ color:#2f6690; }
+  .theme-clinical .brand-mark{ border-radius:6px; border-color:#2f6690; color:#2f6690; }
+  .theme-clinical .event-badge{ color:#2f6690; border:1px solid #2f6690; border-radius:4px; padding:4px 10px; display:inline-block; font-size:13px; letter-spacing:0.06em; }
+  .theme-clinical .period{ color:#5c7789; }
+  .theme-clinical .title{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:#1c2b36; text-transform:uppercase; letter-spacing:-0.01em; }
+  .theme-clinical .divider-main{ background:#c9d6de; }
+  .theme-clinical .item-name{ color:#1c2b36; }
+  .theme-clinical .tag{ color:#2f6690; font-weight:600; }
+  .theme-clinical .row-label{ color:#5c7789; }
+  .theme-clinical .price-original{ color:#93a7b2; }
+  .theme-clinical .price-sale{ color:#2f6690; font-family:'Space Grotesk',sans-serif; font-variant-numeric:tabular-nums; }
+  .theme-clinical .divider-mid{ background:#c9d6de; }
+  .theme-clinical table.price-table th{ color:#5c7789; border-bottom:1px solid #2f6690; text-transform:uppercase; font-size:0.78em; letter-spacing:0.04em; }
+  .theme-clinical table.price-table td{ border-bottom:1px solid #dde6ea; }
+  .theme-clinical table.price-table td.val-cell{ color:#2f6690; font-family:'Space Grotesk',sans-serif; }
+  .theme-clinical .footer-notes div{ color:#5c7789; }
+
+  /* ================= THEME: CORAL POP ================= */
+  .theme-coral{ background:#fdf6f1; color:#241a15; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#ffffff; --item-shadow:rgba(224,90,60,.18); --divider-soft:#f0d9cf; }
+  .theme-coral .header{ font-family:'Space Grotesk',sans-serif; }
+  .theme-coral .brand{ color:#e05a3c; }
+  .theme-coral .brand-mark{ border-color:#e05a3c; color:#e05a3c; }
+  .theme-coral .event-badge{ color:#e05a3c; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; font-size:14px; }
+  .theme-coral .period{ color:#8a7267; font-weight:700; }
+  .theme-coral .title{ font-family:'Space Grotesk',sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:-0.02em; color:#241a15; }
+  .theme-coral .divider-main{ background:#e05a3c; height:3px; }
+  .theme-coral .item-name{ color:#241a15; font-weight:800; }
+  .theme-coral .tag{ color:#e05a3c; font-weight:700; }
+  .theme-coral .row-label{ color:#a8897b; }
+  .theme-coral .price-original{ color:#c2ab9f; }
+  .theme-coral .price-sale{ color:#e05a3c; }
+  .theme-coral .divider-mid{ background:#f0d9cf; }
+  .theme-coral table.price-table th{ color:#a8897b; border-bottom:1px solid #e05a3c; }
+  .theme-coral table.price-table td{ border-bottom:1px solid #f4e5dc; }
+  .theme-coral table.price-table td.val-cell{ color:#e05a3c; }
+  .theme-coral .footer-notes div{ color:#a8897b; }
+
+  /* ================= THEME: BOTANICAL SAGE ================= */
+  .theme-botanical{ background:linear-gradient(160deg,#f6f5ef 0%,#eef0e4 100%); color:#34382c; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#fdfcf7; --item-shadow:rgba(80,100,60,.14); --divider-soft:#d9dcc9; }
+  .theme-botanical .header{ font-family:'Noto Serif KR',serif; }
+  .theme-botanical .brand{ color:#6b7f5e; }
+  .theme-botanical .brand-mark{ border-color:#6b7f5e; color:#6b7f5e; font-family:'Noto Serif KR',serif; }
+  .theme-botanical .event-badge{ color:#6b7f5e; font-size:13px; letter-spacing:0.08em; }
+  .theme-botanical .period{ color:#7c8468; }
+  .theme-botanical .title{ font-family:'Noto Serif KR',serif; font-weight:700; color:#2b2e22; }
+  .theme-botanical .divider-main{ background:#c7cdb2; }
+  .theme-botanical .item-name{ color:#34382c; }
+  .theme-botanical .tag{ color:#6b7f5e; font-weight:600; }
+  .theme-botanical .row-label{ color:#8b9179; }
+  .theme-botanical .price-original{ color:#a9ad97; }
+  .theme-botanical .price-sale{ color:#5c6e50; }
+  .theme-botanical .divider-mid{ background:#d9dcc9; }
+  .theme-botanical table.price-table th{ color:#7c8468; border-bottom:1px solid #c7cdb2; }
+  .theme-botanical table.price-table td{ border-bottom:1px solid #e4e6d7; }
+  .theme-botanical table.price-table td.val-cell{ color:#5c6e50; }
+  .theme-botanical .footer-notes div{ color:#8b9179; }
+
+  /* ================= THEME: LAB NOTE ================= */
+  .theme-labnote{
+    background-color:#fbfaf6;
+    background-image:
+      linear-gradient(to right, transparent 0 55px, rgba(179,58,46,.4) 55px 56px, transparent 56px 100%),
+      repeating-linear-gradient(to bottom, transparent 0 33px, rgba(35,36,31,.07) 33px 34px);
+    color:#23241f; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#ffffff; --item-shadow:rgba(0,0,0,.08); --divider-soft:#d8d4c8;
+  }
+  .theme-labnote .header{ font-family:'Space Grotesk',sans-serif; }
+  .theme-labnote .brand{ color:#23241f; }
+  .theme-labnote .brand-mark{ border-radius:3px; border-color:#23241f; }
+  .theme-labnote .event-badge{ color:#b33a2e; border:1px dashed #b33a2e; padding:3px 9px; display:inline-block; font-size:13px; letter-spacing:0.05em; }
+  .theme-labnote .period{ font-family:'Space Grotesk',sans-serif; color:#6b6a5f; }
+  .theme-labnote .title{ font-weight:800; letter-spacing:-0.015em; color:#1a1b17; }
+  .theme-labnote .divider-main{ background:#23241f; }
+  .theme-labnote .item-name{ color:#23241f; }
+  .theme-labnote .tag{ color:#b33a2e; font-weight:600; }
+  .theme-labnote .row-label{ color:#6b6a5f; font-family:'Space Grotesk',sans-serif; }
+  .theme-labnote .price-original{ color:#9c9a8c; }
+  .theme-labnote .price-sale{ color:#b33a2e; font-family:'Space Grotesk',sans-serif; font-variant-numeric:tabular-nums; }
+  .theme-labnote .divider-mid{ background:#d8d4c8; }
+  .theme-labnote table.price-table th{ color:#6b6a5f; border-bottom:1px solid #23241f; font-family:'Space Grotesk',sans-serif; }
+  .theme-labnote table.price-table td{ border-bottom:1px solid #e3e0d3; }
+  .theme-labnote table.price-table td.val-cell{ color:#b33a2e; font-family:'Space Grotesk',sans-serif; }
+  .theme-labnote .footer-notes div{ color:#8a8878; }
+
+  /* ================= THEME: DEEP BURGUNDY ATELIER ================= */
+  .theme-burgundy{ background:linear-gradient(160deg,#f8f2ee 0%,#f1e6e0 100%); color:#2b1a1a; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:#fffaf7; --item-shadow:rgba(110,36,56,.16); --divider-soft:#e2cfc9; }
+  .theme-burgundy .header{ font-family:'Noto Serif KR',serif; }
+  .theme-burgundy .brand{ color:#6e2438; }
+  .theme-burgundy .brand-mark{ border-color:#6e2438; color:#6e2438; font-family:'Noto Serif KR',serif; }
+  .theme-burgundy .event-badge{ color:#6e2438; letter-spacing:0.1em; font-size:13px; }
+  .theme-burgundy .period{ color:#8a6a63; }
+  .theme-burgundy .title{ font-family:'Noto Serif KR',serif; font-weight:800; color:#241313; }
+  .theme-burgundy .divider-main{ background:linear-gradient(90deg,#6e2438,transparent 85%); }
+  .theme-burgundy .item-name{ color:#2b1a1a; }
+  .theme-burgundy .tag{ color:#6e2438; font-weight:600; }
+  .theme-burgundy .row-label{ color:#8a6a63; }
+  .theme-burgundy .price-original{ color:#b79a93; }
+  .theme-burgundy .price-sale{ color:#6e2438; }
+  .theme-burgundy .divider-mid{ background:#e2cfc9; }
+  .theme-burgundy table.price-table th{ color:#8a6a63; border-bottom:1px solid #e2cfc9; }
+  .theme-burgundy table.price-table td{ border-bottom:1px solid #efe2dd; }
+  .theme-burgundy table.price-table td.val-cell{ color:#6e2438; }
+  .theme-burgundy .footer-notes div{ color:#8a6a63; }
+
+  /* ================= THEME: NO BACKGROUND (transparent) ================= */
+  .theme-none{ background:transparent; color:#1a1a1a; font-family:'Noto Sans KR',sans-serif;
+    --item-card-bg:rgba(255,255,255,0.92); --item-shadow:rgba(0,0,0,.15); --divider-soft:#c9c9c9; }
+  .theme-none .brand{ color:#1a1a1a; }
+  .theme-none .brand-mark{ border-color:#1a1a1a; color:#1a1a1a; }
+  .theme-none .event-badge{ color:#1a1a1a; font-weight:800; letter-spacing:0.04em; border-bottom:2px solid #1a1a1a; padding-bottom:4px; display:inline-block; }
+  .theme-none .period{ color:#5a5a5a; }
+  .theme-none .title{ font-weight:800; color:#0f0f0f; letter-spacing:-0.02em; }
+  .theme-none .divider-main{ background:#1a1a1a; }
+  .theme-none .item-name{ color:#1a1a1a; }
+  .theme-none .tag{ color:#5a5a5a; font-weight:700; }
+  .theme-none .row-label{ color:#8a8a8a; }
+  .theme-none .price-original{ color:#9a9a9a; }
+  .theme-none .price-sale{ color:#0f0f0f; font-weight:800; }
+  .theme-none .divider-mid{ background:#c9c9c9; }
+  .theme-none table.price-table th{ color:#5a5a5a; border-bottom:1px solid #1a1a1a; }
+  .theme-none table.price-table td{ border-bottom:1px solid #d8d8d8; }
+  .theme-none table.price-table td.val-cell{ color:#0f0f0f; font-weight:800; }
+  .theme-none .footer-notes div{ color:#5a5a5a; }
+
+  /* ================= LAYOUT STYLES (independent of color theme) ================= */
+  .layout-cards .item{
+    background:var(--item-card-bg,#fff);
+    box-shadow:0 8px 20px -10px var(--item-shadow, rgba(0,0,0,.15));
+    border-radius:18px; padding:0.9em 1.1em;
+  }
+  .layout-row .item{ display:flex; gap:1.2em; align-items:baseline; }
+  .layout-row .item-name{ flex:1; }
+  .layout-row .rows{ flex-shrink:0; margin-top:0; }
+
+  .layout-numbered .list{ counter-reset:itemnum; }
+  .layout-numbered .item{ counter-increment:itemnum; position:relative; padding-left:2.1em; }
+  .layout-numbered .item::before{
+    content:counter(itemnum, decimal-leading-zero);
+    position:absolute; left:0; top:0.02em; font-weight:800; font-size:1.15em;
+    opacity:0.32; font-family:'Space Grotesk',sans-serif; font-variant-numeric:tabular-nums;
+  }
+
+  .layout-grid2 .list{ display:grid; grid-template-columns:1fr 1fr; column-gap:1.6em; }
+  .layout-grid2 .item{ margin-bottom:1em; }
+
+  .layout-menu .item{ display:flex; align-items:baseline; gap:0.8em; }
+  .layout-menu .item-name{ flex:1; border-bottom:1px dotted var(--divider-soft,#ccc); padding-bottom:0.18em; }
+  .layout-menu .rows{ flex-shrink:0; margin-top:0; }
+
+  .layout-outline .item{ border:1px solid var(--divider-soft,#ccc); border-radius:14px; padding:0.85em 1.05em; background:transparent; }
+
+  input[type=range]{ width:100%; accent-color:var(--accent-ui); height:4px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="panel">
+    <h1>이벤트 포스터 생성기</h1>
+    <p class="sub">텍스트를 붙여넣으면 자동으로 이벤트 포스터 디자인이 만들어져요. 카드 비율은 A4 용지 비율(210×297mm)로 고정됩니다.</p>
+
+    <div class="field">
+      <label>상호명</label>
+      <input type="text" id="brandName" value="매일빛나는의원">
+    </div>
+
+    <div class="field">
+      <label>디자인 테마 (색상)</label>
+      <div class="theme-grid" id="themeGrid">
+        <div class="theme-swatch sw-warm active" data-theme="theme-warm"><span>웜시그니처</span></div>
+        <div class="theme-swatch sw-mono" data-theme="theme-mono"><span>미니멀모노</span></div>
+        <div class="theme-swatch sw-pastel" data-theme="theme-pastel"><span>모던블러쉬</span></div>
+        <div class="theme-swatch sw-dark" data-theme="theme-dark"><span>다크럭셔리</span></div>
+        <div class="theme-swatch sw-editorial" data-theme="theme-editorial"><span>에디토리얼</span></div>
+        <div class="theme-swatch sw-clinical" data-theme="theme-clinical"><span>클리니컬블루</span></div>
+        <div class="theme-swatch sw-coral" data-theme="theme-coral"><span>코랄팝</span></div>
+        <div class="theme-swatch sw-botanical" data-theme="theme-botanical"><span>보태니컬세이지</span></div>
+        <div class="theme-swatch sw-labnote" data-theme="theme-labnote"><span>랩노트</span></div>
+        <div class="theme-swatch sw-burgundy" data-theme="theme-burgundy"><span>딥버건디</span></div>
+        <div class="theme-swatch sw-none" data-theme="theme-none"><span>배경없음</span></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>레이아웃 (항목 배치)</label>
+      <div class="layout-grid" id="layoutGrid">
+        <div class="layout-btn active" data-layout="layout-stack">스택형</div>
+        <div class="layout-btn" data-layout="layout-cards">카드형</div>
+        <div class="layout-btn" data-layout="layout-row">가로정렬형</div>
+        <div class="layout-btn" data-layout="layout-numbered">번호형</div>
+        <div class="layout-btn" data-layout="layout-grid2">그리드형</div>
+        <div class="layout-btn" data-layout="layout-menu">메뉴형</div>
+        <div class="layout-btn" data-layout="layout-outline">아웃라인형</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>전체 글자 크기 <span id="scaleLabel" style="color:var(--ink); text-transform:none;">100%</span></label>
+      <input type="range" id="fontScale" min="70" max="140" step="5" value="100">
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:5px; line-height:1.5;">100%는 카드에 딱 맞는 자동 크기예요. 더 키우면 내용이 카드 밖으로 넘칠 수 있어요.</div>
+    </div>
+
+    <details class="help">
+      <summary>입력 방법 안내 (탭하여 펼치기)</summary>
+      <div class="help-body">
+        그냥 문구를 죽 붙여넣어도 자동 인식됩니다. (예: <code>온다리프팅 [1회] 110만 90만</code>)<br><br>
+        더 정확하게 만들고 싶으면 아래 기호를 사용하세요:
+        <pre>#EVENT 2|여름맞이 탄력 SOS|26' 7-8월
+
+- [바디]온다리프팅 [10만줄]
+&gt; 1회|110만|90만
+&gt; 3회|330만|250만
+
+- 상품명 (가격 1개만)
+&gt; |65만|45만
+
+---  (구분선)
+
+||보톡스|국산|외산   (표 헤더)
+|주름 1부위|3만|8만   (표 행)
+
+* 미용 시술 부가세 10% 별도  (하단 안내문)</pre>
+      </div>
+    </details>
+
+    <div class="field">
+      <label>이벤트 내용</label>
+      <textarea id="rawText">#EVENT 2|여름맞이 탄력 SOS|26' 7-8월
+
+- [바디]온다리프팅 [10만줄]
+> 1회|110만|90만
+> 3회|330만|250만
+
+- [바디]온다리프팅 [10만줄] + 지방분해주사 [5앰플]
+> 1회|125만|97만
+> 3회|375만|268만
+
+- 온다리프팅 [6만줄] + 토르리프팅
+> 1회|105만|75만
+> 3회|315만|210만
+
+---
+
+- 토르리프팅 + 리프테라 [3천샷] + 스킨보톡스
+> |65만|45만
+
+- 토르리프팅 + 리프테라 [3천샷] + 아기레이저
+> |75만|55만
+
+* 미용 시술 부가세 10% 별도
+* 양도, 환불, 패키지 변경 불가</textarea>
+    </div>
+
+    <div class="field">
+      <label>배경 이미지 (선택)</label>
+      <input type="file" id="bgImageInput" accept="image/*">
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <select id="scrimMode" style="flex:1;">
+          <option value="light" selected>밝은 스크림</option>
+          <option value="dark">어두운 스크림</option>
+          <option value="none">스크림 없음</option>
+        </select>
+        <button type="button" class="btn-ghost" id="btnRemoveBg" style="flex:0 0 auto; padding:9px 14px;">제거</button>
+      </div>
+      <input type="range" id="scrimStrength" min="0" max="95" step="5" value="70" style="margin-top:8px;">
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:5px; line-height:1.5;">사진 위에 색을 덮어서 글자가 잘 보이게 해줘요. 배경없음 테마와 같이 쓰면 PNG는 사진만 투명 배경 위에 저장돼요.</div>
+    </div>
+
+    <div class="field">
+      <label>내보내기 화질</label>
+      <select id="quality">
+        <option value="2">표준 (2x · 약 170dpi)</option>
+        <option value="4" selected>고화질 (4x · 약 340dpi)</option>
+        <option value="6">최고화질 (6x · 약 510dpi)</option>
+      </select>
+    </div>
+
+    <div class="btnbar">
+      <button class="btn-primary" id="btnRefresh">미리보기 새로고침</button>
+    </div>
+    <div class="export-row">
+      <button class="btn-ghost" id="btnPng">PNG 저장</button>
+      <button class="btn-ghost" id="btnJpg">JPG 저장</button>
+      <button class="btn-ghost" id="btnPdf">PDF 저장</button>
+    </div>
+  </div>
+
+  <div class="stage-wrap">
+    <div class="stage-inner">
+      <div class="stage-caption">카드 크기 <b>A4 (210&nbsp;×&nbsp;297&nbsp;mm)</b> 비율</div>
+      <div class="preview-stage" id="previewStage">
+        <div class="preview-zoom" id="zoomWrap">
+          <div class="card theme-warm layout-stack" id="card">
+            <div class="header">
+              <div class="brand"><div class="brand-mark" id="brandMark">M</div><div class="brand-name" id="brandNameOut">매일빛나는의원</div></div>
+              <div class="head-top">
+                <div class="event-badge" id="eventBadge">EVENT</div>
+                <div class="period" id="periodOut"></div>
+              </div>
+              <div class="title" id="titleOut">제목을 입력하세요</div>
+            </div>
+            <hr class="divider-main">
+            <div class="body-content" id="bodyContent"></div>
+            <div class="footer-notes" id="footerNotes"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const el = id => document.getElementById(id);
+const cardEl = el('card');
+const bodyContentEl = el('bodyContent');
+
+/* ---------------- PARSER ---------------- */
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function renderTags(name){
+  const escaped = escapeHtml(name);
+  return escaped.replace(/\[([^\]]+)\]/g, '<span class="tag">[$1]</span>');
+}
+
+function isStructured(text){
+  return text.split('\n').some(l => /^\s*#/.test(l));
+}
+
+function structuredParse(text){
+  const lines = text.split('\n');
+  let header = null;
+  const blocks = [];
+  const notes = [];
+  let currentList = null;
+  let currentTable = null;
+  let currentItem = null;
+
+  for (let raw of lines){
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith('#')){
+      const parts = line.slice(1).split('|').map(s=>s.trim());
+      if (parts.length >= 3) header = { eventLabel: parts[0], title: parts[1], period: parts[2] };
+      else if (parts.length === 2) header = { eventLabel:'', title: parts[0], period: parts[1] };
+      else header = { eventLabel:'', title: parts[0]||'', period:'' };
+      currentTable = null; currentList = null; currentItem = null;
+    } else if (line.startsWith('---')){
+      blocks.push({type:'divider'});
+      currentList = null; currentTable = null; currentItem = null;
+    } else if (line.startsWith('||')){
+      const cells = line.slice(2).split('|').map(s=>s.trim());
+      currentTable = { type:'table', headers: cells, rows: [] };
+      blocks.push(currentTable);
+      currentList = null; currentItem = null;
+    } else if (line.startsWith('|')){
+      const cells = line.slice(1).split('|').map(s=>s.trim());
+      if (!currentTable){ currentTable = {type:'table', headers:[], rows:[]}; blocks.push(currentTable); }
+      currentTable.rows.push(cells);
+    } else if (line.startsWith('*')){
+      notes.push(line.slice(1).trim());
+    } else if (line.startsWith('>')){
+      const parts = line.slice(1).split('|').map(s=>s.trim());
+      let label='', original='', sale='';
+      if (parts.length >= 3){ label = parts[0]; original = parts[1]; sale = parts[2]; }
+      else if (parts.length === 2){ original = parts[0]; sale = parts[1]; }
+      if (currentItem) currentItem.rows.push({label, original, sale});
+    } else if (line.startsWith('-')){
+      const name = line.slice(1).trim();
+      if (!currentList){ currentList = {type:'list', items:[]}; blocks.push(currentList); }
+      currentItem = { name, rows: [] };
+      currentList.items.push(currentItem);
+      currentTable = null;
+    }
+  }
+  return { header: header || {eventLabel:'',title:'제목을 입력하세요',period:''}, blocks, notes };
+}
+
+function heuristicParse(text){
+  const lines = text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  let header = null;
+  const blocks = [];
+  const notes = [];
+  let currentList = null;
+  const priceRe = /(?:\[?(\d+)\s*회\]?)?\s*([\d,]+\s*만)\s*[→\-~]?\s*([\d,]+\s*만)/g;
+
+  for (const raw of lines){
+    if (!header && /EVENT/i.test(raw)){
+      const numMatch = raw.match(/EVENT\s*(\d+)?/i);
+      const eventLabel = numMatch ? `EVENT${numMatch[1] ? ' '+numMatch[1] : ''}` : 'EVENT';
+      const periodMatch = raw.match(/(\d{2}'?\s*\d{1,2}\s*-\s*\d{1,2}\s*월)/);
+      let rest = raw.replace(/EVENT\s*\d*/i,'').trim();
+      let period = '';
+      if (periodMatch){ period = periodMatch[1]; rest = rest.replace(periodMatch[1],'').trim(); }
+      header = { eventLabel, title: rest, period };
+      continue;
+    }
+    if (/^[\*·•]/.test(raw) || /부가세|환불|양도|변경\s*불가/.test(raw)){
+      notes.push(raw.replace(/^[\*·•]\s*/, ''));
+      continue;
+    }
+    priceRe.lastIndex = 0;
+    const matches = [...raw.matchAll(priceRe)];
+    if (matches.length > 0){
+      const firstIdx = matches[0].index;
+      const namePart = raw.slice(0, firstIdx).trim();
+      if (!currentList){ currentList = {type:'list', items:[]}; blocks.push(currentList); }
+      if (namePart){
+        currentList.items.push({ name: namePart, rows: [] });
+      }
+      if (currentList.items.length === 0){
+        currentList.items.push({ name:'', rows: [] });
+      }
+      const item = currentList.items[currentList.items.length - 1];
+      matches.forEach(m => {
+        item.rows.push({ label: m[1] ? `${m[1]}회` : '', original: m[2].replace(/\s/g,''), sale: m[3].replace(/\s/g,'') });
+      });
+    } else {
+      if (!currentList){ currentList = {type:'list', items:[]}; blocks.push(currentList); }
+      currentList.items.push({ name: raw, rows: [] });
+    }
+  }
+  return { header: header || {eventLabel:'',title:'제목을 입력하세요',period:''}, blocks, notes };
+}
+
+function parseText(text){
+  if (isStructured(text)) return structuredParse(text);
+  return heuristicParse(text);
+}
+
+/* ---------------- RENDERER ---------------- */
+function renderRow(row){
+  const label = row.label ? `<span class="row-label">${escapeHtml(row.label)}</span>` : '';
+  const original = row.original ? `<span class="price-original">${escapeHtml(row.original)}</span>` : '';
+  const sale = row.sale ? `<span class="price-sale">${escapeHtml(row.sale)}</span>` : '';
+  return `<div class="row">${label}<div class="row-prices">${original}${sale}</div></div>`;
+}
+
+function renderBlocks(blocks){
+  let html = '';
+  blocks.forEach(block => {
+    if (block.type === 'list'){
+      html += '<div class="list">';
+      block.items.forEach(item => {
+        if (!item.name && item.rows.length === 0) return;
+        html += `<div class="item"><div class="item-name">${renderTags(item.name)}</div>`;
+        if (item.rows.length){
+          html += `<div class="rows">${item.rows.map(renderRow).join('')}</div>`;
+        }
+        html += `</div>`;
+      });
+      html += '</div>';
+    } else if (block.type === 'table'){
+      const heads = block.headers || [];
+      html += '<table class="price-table"><thead><tr>';
+      heads.forEach((h,i) => {
+        html += `<th${i>0?' class="val-head"':''}>${escapeHtml(h)}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+      block.rows.forEach(r => {
+        html += '<tr>';
+        r.forEach((c,i) => {
+          html += i===0 ? `<td class="name-cell">${renderTags(c)}</td>` : `<td class="val-cell">${escapeHtml(c)}</td>`;
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+    } else if (block.type === 'divider'){
+      html += '<hr class="divider-mid">';
+    }
+  });
+  return html;
+}
+
+function fitContent(){
+  bodyContentEl.style.fontSize = '20px';
+  const header = cardEl.querySelector('.header');
+  const dividerMain = cardEl.querySelector('.divider-main');
+  const footer = cardEl.querySelector('.footer-notes');
+  const cardHeight = cardEl.clientHeight;
+  const used = header.offsetHeight + dividerMain.offsetHeight + footer.offsetHeight;
+  const available = cardHeight - used - 34;
+  let fontSize = 20;
+  for (let i=0; i<7; i++){
+    const needed = bodyContentEl.scrollHeight;
+    if (needed <= available) break;
+    fontSize = Math.max(8.5, fontSize * (available / needed) * 0.96);
+    bodyContentEl.style.fontSize = fontSize.toFixed(2) + 'px';
+  }
+  // user's manual scale is applied on top of the auto-fit result, so it always has a visible effect
+  const scalePct = parseInt(el('fontScale').value, 10) || 100;
+  fontSize = fontSize * (scalePct / 100);
+  bodyContentEl.style.fontSize = fontSize.toFixed(2) + 'px';
+}
+
+function renderCard(){
+  const text = el('rawText').value;
+  const data = parseText(text);
+  const brand = el('brandName').value.trim() || '의원';
+
+  el('brandNameOut').textContent = brand;
+  el('brandMark').textContent = brand.charAt(0);
+  el('eventBadge').textContent = data.header.eventLabel || '';
+  el('eventBadge').style.display = data.header.eventLabel ? '' : 'none';
+  el('periodOut').textContent = data.header.period || '';
+  el('titleOut').textContent = data.header.title || '제목을 입력하세요';
+
+  bodyContentEl.innerHTML = renderBlocks(data.blocks);
+
+  const notesEl = el('footerNotes');
+  notesEl.innerHTML = data.notes.map(n => `<div>* ${escapeHtml(n)}</div>`).join('');
+
+  requestAnimationFrame(fitContent);
+}
+
+/* ---------------- THEME / LAYOUT SWITCH ---------------- */
+let currentColorTheme = 'theme-warm';
+let currentLayout = 'layout-stack';
+function applyCardClass(){
+  cardEl.className = 'card ' + currentColorTheme + ' ' + currentLayout;
+}
+document.querySelectorAll('.theme-swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    currentColorTheme = sw.dataset.theme;
+    applyCardClass();
+    renderCard();
+  });
+});
+document.querySelectorAll('.layout-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentLayout = btn.dataset.layout;
+    applyCardClass();
+    renderCard();
+  });
+});
+el('fontScale').addEventListener('input', () => {
+  el('scaleLabel').textContent = el('fontScale').value + '%';
+  renderCard();
+});
+
+/* ---------------- BACKGROUND IMAGE ---------------- */
+let bgImageDataUrl = null;
+function applyBgImage(){
+  if (!bgImageDataUrl){
+    cardEl.style.backgroundImage = '';
+    return;
+  }
+  const mode = el('scrimMode').value;
+  const strength = parseInt(el('scrimStrength').value, 10) / 100;
+  let overlay = '';
+  if (mode === 'light') overlay = `linear-gradient(rgba(255,255,255,${strength}), rgba(255,255,255,${strength})), `;
+  else if (mode === 'dark') overlay = `linear-gradient(rgba(0,0,0,${strength}), rgba(0,0,0,${strength})), `;
+  cardEl.style.backgroundImage = `${overlay}url(${bgImageDataUrl})`;
+  cardEl.style.backgroundSize = 'cover';
+  cardEl.style.backgroundPosition = 'center';
+}
+el('bgImageInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    bgImageDataUrl = ev.target.result;
+    applyBgImage();
+  };
+  reader.readAsDataURL(file);
+});
+el('scrimMode').addEventListener('change', applyBgImage);
+el('scrimStrength').addEventListener('input', applyBgImage);
+el('btnRemoveBg').addEventListener('click', () => {
+  bgImageDataUrl = null;
+  el('bgImageInput').value = '';
+  applyBgImage();
+});
+
+/* ---------------- ZOOM / RESPONSIVE PREVIEW ---------------- */
+const stage = el('previewStage');
+const zoomWrap = el('zoomWrap');
+function recomputeZoom(){
+  const wrapWidth = document.querySelector('.stage-wrap').clientWidth - 32;
+  const wrapHeight = window.innerHeight - 140;
+  const zoom = Math.min(wrapWidth / 700, wrapHeight / 990, 1);
+  zoomWrap.style.transform = `scale(${zoom})`;
+  stage.style.width = (700 * zoom) + 'px';
+  stage.style.height = (990 * zoom) + 'px';
+}
+window.addEventListener('resize', recomputeZoom);
+
+/* ---------------- EXPORT ---------------- */
+function fileNameBase(){
+  const t = el('titleOut').textContent.trim() || 'event-poster';
+  return t.replace(/[^\w가-힣\-]+/g,'_').slice(0,40);
+}
+function qualityScale(){ return parseInt(el('quality').value, 10); }
+
+async function captureCanvas(transparent){
+  return await html2canvas(cardEl, {
+    scale: qualityScale(),
+    backgroundColor: transparent ? null : '#ffffff',
+    useCORS: true,
+    logging: false
+  });
+}
+
+el('btnPng').addEventListener('click', async () => {
+  const transparent = (currentColorTheme === 'theme-none' && !bgImageDataUrl);
+  const canvas = await captureCanvas(transparent);
+  const link = document.createElement('a');
+  link.download = fileNameBase() + '.png';
+  link.href = canvas.toDataURL('image/png', 1.0);
+  link.click();
+});
+
+el('btnJpg').addEventListener('click', async () => {
+  const canvas = await captureCanvas(false);
+  const link = document.createElement('a');
+  link.download = fileNameBase() + '.jpg';
+  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.click();
+});
+
+el('btnPdf').addEventListener('click', async () => {
+  const canvas = await captureCanvas(false);
+  const imgData = canvas.toDataURL('image/png', 1.0);
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+  pdf.save(fileNameBase() + '.pdf');
+});
+
+el('btnRefresh').addEventListener('click', renderCard);
+el('rawText').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(renderCard, 500); });
+el('brandName').addEventListener('input', renderCard);
+
+/* ---------------- INIT ---------------- */
+window.addEventListener('load', () => {
+  recomputeZoom();
+  renderCard();
+});
+</script>
+</body>
+</html>
