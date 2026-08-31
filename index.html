@@ -484,7 +484,20 @@
 
   <div class="panel">
     <h1>이벤트 포스터 생성기</h1>
-    <p class="sub">텍스트를 붙여넣으면 자동으로 이벤트 포스터 디자인이 만들어져요. 카드 비율은 A4 용지 비율(210×297mm)로 고정됩니다.</p>
+    <p class="sub">텍스트를 붙여넣으면 자동으로 이벤트 포스터 디자인이 만들어져요. 카드 크기는 210×280mm로 고정됩니다.</p>
+
+    <div class="field">
+      <label>페이지 (최대 6개, 각각 완전히 독립적으로 편집돼요)</label>
+      <div class="layout-grid" id="pageTabs" style="grid-template-columns:repeat(6,1fr);">
+        <div class="layout-btn active" data-page="0">1</div>
+        <div class="layout-btn" data-page="1">2</div>
+        <div class="layout-btn" data-page="2">3</div>
+        <div class="layout-btn" data-page="3">4</div>
+        <div class="layout-btn" data-page="4">5</div>
+        <div class="layout-btn" data-page="5">6</div>
+      </div>
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;">탭을 누르면 그 페이지의 텍스트·테마·레이아웃·배경이 전부 따로 저장/불러와져요. 새로고침하면 내용이 사라지니 완성 후 저장해두세요.</div>
+    </div>
 
     <div class="field">
       <label>상호명</label>
@@ -621,6 +634,17 @@
       <button class="btn-ghost" id="btnPdf">PDF 저장</button>
     </div>
     <div style="font-size:10.5px; color:var(--ink-soft); margin-top:8px; line-height:1.6;">모바일에서는 저장 대신 새 탭에 이미지가 열릴 수 있어요. 그럴 땐 이미지를 길게 눌러 "사진에 저장"을 선택하세요. 카카오톡 등 인앱 브라우저에서는 저장이 막힐 수 있으니 Safari/Chrome 앱에서 열어주세요.</div>
+
+    <div class="field" style="margin-top:18px; padding-top:16px; border-top:1px solid var(--panel-line);">
+      <label>전체 6페이지 한번에 내보내기</label>
+      <div class="btnbar">
+        <button class="btn-primary" id="btnExportAllPdf" style="background:#5b6472;">전체 PDF (6페이지 묶음)</button>
+      </div>
+      <div class="export-row">
+        <button class="btn-ghost" id="btnExportAllPng" style="flex:1 1 100%;">전체 PNG (6장 개별 저장)</button>
+      </div>
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;">현재 편집 중인 탭으로 자동 복귀돼요. 시간이 좀 걸릴 수 있어요.</div>
+    </div>
   </div>
 
   <div class="stage-wrap">
@@ -652,6 +676,31 @@
 const el = id => document.getElementById(id);
 const cardEl = el('card');
 const bodyContentEl = el('bodyContent');
+const DEFAULT_SAMPLE_TEXT = el('rawText').value;
+
+/* ---------------- MULTI-PAGE STATE (6 independent pages) ---------------- */
+function makeDefaultPage(withSample){
+  return {
+    text: withSample ? DEFAULT_SAMPLE_TEXT : '',
+    brandName: '매일빛나는의원',
+    colorTheme: 'theme-warm',
+    layout: 'layout-stack',
+    fillMode: 'fixed',
+    fontScale: 100,
+    bgImageDataUrl: null,
+    scrimMode: 'light',
+    scrimStrength: 70
+  };
+}
+let pages = [
+  makeDefaultPage(true),
+  makeDefaultPage(false),
+  makeDefaultPage(false),
+  makeDefaultPage(false),
+  makeDefaultPage(false),
+  makeDefaultPage(false)
+];
+let currentPageIndex = 0;
 
 /* ---------------- PARSER ---------------- */
 function escapeHtml(s){
@@ -909,6 +958,57 @@ el('fontScale').addEventListener('input', () => {
   renderCard();
 });
 
+/* ---------------- PAGE SWITCHING ---------------- */
+function saveCurrentPageState(){
+  const p = pages[currentPageIndex];
+  p.text = el('rawText').value;
+  p.brandName = el('brandName').value;
+  p.colorTheme = currentColorTheme;
+  p.layout = currentLayout;
+  p.fillMode = currentFillMode;
+  p.fontScale = parseInt(el('fontScale').value, 10) || 100;
+  p.bgImageDataUrl = bgImageDataUrl;
+  p.scrimMode = el('scrimMode').value;
+  p.scrimStrength = parseInt(el('scrimStrength').value, 10) || 70;
+}
+
+function loadPageState(index){
+  const p = pages[index];
+  el('rawText').value = p.text;
+  el('brandName').value = p.brandName;
+  currentColorTheme = p.colorTheme;
+  currentLayout = p.layout;
+  currentFillMode = p.fillMode;
+  el('fontScale').value = p.fontScale;
+  el('scaleLabel').textContent = p.fontScale + '%';
+  bgImageDataUrl = p.bgImageDataUrl;
+  el('scrimMode').value = p.scrimMode;
+  el('scrimStrength').value = p.scrimStrength;
+  el('bgImageInput').value = '';
+
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.toggle('active', s.dataset.theme === p.colorTheme));
+  document.querySelectorAll('#layoutGrid .layout-btn').forEach(b => b.classList.toggle('active', b.dataset.layout === p.layout));
+  document.querySelectorAll('#fillGrid .layout-btn').forEach(b => b.classList.toggle('active', b.dataset.fill === p.fillMode));
+
+  applyCardClass();
+  applyBgImage();
+  renderCard();
+}
+
+function switchToPage(index){
+  if (index === currentPageIndex) return;
+  saveCurrentPageState();
+  currentPageIndex = index;
+  loadPageState(index);
+  document.querySelectorAll('#pageTabs .layout-btn').forEach((t, i) => t.classList.toggle('active', i === index));
+}
+
+document.querySelectorAll('#pageTabs .layout-btn').forEach(tab => {
+  tab.addEventListener('click', () => {
+    switchToPage(parseInt(tab.dataset.page, 10));
+  });
+});
+
 /* ---------------- BACKGROUND IMAGE ---------------- */
 let bgImageDataUrl = null;
 function applyBgImage(){
@@ -1045,6 +1145,48 @@ el('btnPdf').addEventListener('click', () => withLoading(el('btnPdf'), async () 
   pdf.save(fileNameBase() + '.pdf');
 }));
 
+function waitForPaint(){
+  return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
+el('btnExportAllPdf').addEventListener('click', () => withLoading(el('btnExportAllPdf'), async () => {
+  const savedIndex = currentPageIndex;
+  saveCurrentPageState();
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [210, 280] });
+  for (let i = 0; i < pages.length; i++){
+    loadPageState(i);
+    await waitForPaint();
+    const canvas = await captureCanvas(false);
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    if (i > 0) pdf.addPage([210, 280], 'portrait');
+    pdf.addImage(imgData, 'PNG', 0, 0, 210, 280, undefined, 'FAST');
+  }
+  loadPageState(savedIndex);
+  document.querySelectorAll('#pageTabs .layout-btn').forEach((t, i) => t.classList.toggle('active', i === savedIndex));
+  pdf.save('event-poster-6pages.pdf');
+}));
+
+el('btnExportAllPng').addEventListener('click', () => withLoading(el('btnExportAllPng'), async () => {
+  const savedIndex = currentPageIndex;
+  saveCurrentPageState();
+  for (let i = 0; i < pages.length; i++){
+    loadPageState(i);
+    await waitForPaint();
+    const canvas = await captureCanvas(false);
+    await new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        if (!blob){ reject(new Error('이미지 생성 실패 (페이지 ' + (i + 1) + ')')); return; }
+        downloadBlob(blob, 'page' + (i + 1) + '_' + fileNameBase() + '.png');
+        resolve();
+      }, 'image/png', 1.0);
+    });
+    await new Promise(r => setTimeout(r, 350));
+  }
+  loadPageState(savedIndex);
+  document.querySelectorAll('#pageTabs .layout-btn').forEach((t, i) => t.classList.toggle('active', i === savedIndex));
+}));
+
 el('btnRefresh').addEventListener('click', renderCard);
 el('rawText').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(renderCard, 500); });
 el('brandName').addEventListener('input', renderCard);
@@ -1052,7 +1194,7 @@ el('brandName').addEventListener('input', renderCard);
 /* ---------------- INIT ---------------- */
 window.addEventListener('load', () => {
   recomputeZoom();
-  renderCard();
+  loadPageState(0);
 });
 </script>
 </body>
