@@ -541,46 +541,31 @@
 
   .layout-outline .item{ border:1px solid var(--divider-soft,#ccc); border-radius:14px; padding:0.85em 1.05em; background:transparent; }
 
-  .layout-timeline .list{ position:relative; }
-  .layout-timeline .list::before{
-    content:''; position:absolute; left:3px; top:0.4em; bottom:0.4em; width:1px;
-    background:var(--divider-soft,#ccc);
+  /* 인용구형: first item is emphasized as a "hero", rest are compact */
+  .layout-feature .item-hero{
+    padding-bottom:0.9em; margin-bottom:1.1em;
+    border-bottom:1px solid var(--divider-soft,#ccc);
   }
-  .layout-timeline .item{ position:relative; padding-left:1.5em; }
-  .layout-timeline .item::before{
-    content:''; position:absolute; left:0; top:0.35em; width:7px; height:7px;
-    border-radius:50%; background:currentColor;
+  .layout-feature .item-hero .item-name{ font-size:1.55em; line-height:1.28; }
+  .layout-feature .item-hero .price-sale{ font-size:1.55em; }
+  .layout-feature .item:not(.item-hero){ font-size:0.85em; }
+
+  /* 좌우분할형: header sits as a left column, content stacks in the right column */
+  .layout-split.card{
+    display:grid;
+    grid-template-columns:38% 1fr;
+    grid-template-rows:auto auto 1fr auto;
   }
-
-  .layout-bignumber .item{ display:flex; align-items:center; gap:1em; }
-  .layout-bignumber .item-name{ order:2; flex:1; }
-  .layout-bignumber .rows{ order:1; flex-shrink:0; }
-  .layout-bignumber .price-sale{ font-size:1.85em; }
-  .layout-bignumber .price-original{ display:block; }
-
-  .layout-checklist .item{ position:relative; padding-left:1.7em; }
-  .layout-checklist .item::before{
-    content:''; position:absolute; left:0; top:0.16em; width:1em; height:1em;
-    border:1.4px solid currentColor; border-radius:4px; opacity:0.55;
+  .layout-split .header{
+    grid-column:1; grid-row:1 / span 4;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:36px 30px;
+    border-right:1px solid var(--divider-soft, rgba(0,0,0,.08));
   }
-  .layout-checklist .item::after{
-    content:'\2713'; position:absolute; left:0.16em; top:0.02em; font-size:0.78em;
-    font-weight:800; opacity:0.85;
-  }
-
-  .layout-compact .item{ margin-bottom:0.45em; }
-  .layout-compact .item-name{ font-size:0.92em; }
-  .layout-compact .rows{ margin-top:0.05em; }
-  .layout-compact .row{ font-size:0.88em; }
-
-  .layout-grid3 .list{ display:grid; grid-template-columns:1fr 1fr 1fr; column-gap:1em; }
-  .layout-grid3 .item{ margin-bottom:0.9em; }
-  .layout-grid3 .item-name{ font-size:0.95em; }
-
-  .layout-tag .row-label{
-    background:var(--item-card-bg,#fff); border-left:3px solid currentColor;
-    padding:0.15em 0.6em; font-weight:700; display:inline-block;
-  }
+  .layout-split .head-top{ flex-direction:column; align-items:flex-start; gap:0.5em; margin-top:0.6em; }
+  .layout-split .divider-main{ display:none; }
+  .layout-split .body-content{ grid-column:2; grid-row:2 / span 2; padding:32px 44px 8px 32px; }
+  .layout-split .footer-notes{ grid-column:2; grid-row:4; padding:0 44px 24px 32px; }
 
   input[type=range]{ width:100%; accent-color:var(--accent-ui); height:4px; }
 </style>
@@ -640,12 +625,8 @@
         <div class="layout-btn" data-layout="layout-grid2">그리드형</div>
         <div class="layout-btn" data-layout="layout-menu">메뉴형</div>
         <div class="layout-btn" data-layout="layout-outline">아웃라인형</div>
-        <div class="layout-btn" data-layout="layout-timeline">타임라인형</div>
-        <div class="layout-btn" data-layout="layout-bignumber">가격강조형</div>
-        <div class="layout-btn" data-layout="layout-checklist">체크리스트형</div>
-        <div class="layout-btn" data-layout="layout-compact">콤팩트형</div>
-        <div class="layout-btn" data-layout="layout-grid3">3열그리드형</div>
-        <div class="layout-btn" data-layout="layout-tag">태그형</div>
+        <div class="layout-btn" data-layout="layout-feature">인용구형</div>
+        <div class="layout-btn" data-layout="layout-split">좌우분할형</div>
       </div>
     </div>
 
@@ -984,7 +965,11 @@ function fitContent(){
   const dividerMain = cardEl.querySelector('.divider-main');
   const footer = cardEl.querySelector('.footer-notes');
   const cardHeight = cardEl.clientHeight;
-  const used = header.offsetHeight + dividerMain.offsetHeight + footer.offsetHeight;
+  // In split layout the header sits beside the content (not above it), so its height
+  // shouldn't be subtracted from the vertical space available to body-content.
+  const used = (currentLayout === 'layout-split')
+    ? footer.offsetHeight
+    : header.offsetHeight + dividerMain.offsetHeight + footer.offsetHeight;
   const available = cardHeight - used - 34;
   let fontSize = 20;
   for (let i=0; i<7; i++){
@@ -1001,14 +986,18 @@ function fitContent(){
   // "간격 채우기" mode: content stays anchored at the top, but leftover space below is
   // distributed evenly into the gaps between rows/blocks instead of being left empty.
   if (currentFillMode === 'justify'){
-    // body-content is flex:1 stretched to fill available space, so its scrollHeight
-    // normally just equals that stretched box height, not the content's true height.
-    // Temporarily let it shrink-wrap to its real content to measure the actual gap.
+    // body-content is stretched (flex:1 normally, or a grid row in split layout), so its
+    // scrollHeight normally just equals that stretched box height, not the content's true
+    // height. Temporarily let it shrink-wrap to its real content to measure the actual gap.
     bodyContentEl.style.flexGrow = '0';
     bodyContentEl.style.flexBasis = 'auto';
+    bodyContentEl.style.alignSelf = 'start';
+    bodyContentEl.style.height = 'auto';
     const naturalHeight = bodyContentEl.scrollHeight;
     bodyContentEl.style.flexGrow = '';
     bodyContentEl.style.flexBasis = '';
+    bodyContentEl.style.alignSelf = '';
+    bodyContentEl.style.height = '';
 
     const extra = available - naturalHeight;
     if (extra > 4){
@@ -1039,6 +1028,11 @@ function renderCard(){
   el('titleOut').textContent = data.header.title || '제목을 입력하세요';
 
   bodyContentEl.innerHTML = renderBlocks(data.blocks);
+
+  if (currentLayout === 'layout-feature'){
+    const firstItem = bodyContentEl.querySelector('.item');
+    if (firstItem) firstItem.classList.add('item-hero');
+  }
 
   const notesEl = el('footerNotes');
   notesEl.innerHTML = data.notes.map(n => `<div>* ${escapeHtml(n)}</div>`).join('');
