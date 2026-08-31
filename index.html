@@ -587,7 +587,17 @@
         <div class="layout-btn" data-page="4">5</div>
         <div class="layout-btn" data-page="5">6</div>
       </div>
-      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;">탭을 누르면 그 페이지의 텍스트·테마·레이아웃·배경이 전부 따로 저장/불러와져요. 새로고침하면 내용이 사라지니 완성 후 저장해두세요.</div>
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;">탭을 누르면 그 페이지의 텍스트·테마·레이아웃·배경이 전부 따로 저장/불러와져요.</div>
+    </div>
+
+    <div class="field">
+      <label>프로젝트 파일로 저장/불러오기</label>
+      <div class="export-row">
+        <button class="btn-ghost" id="btnSaveProject" style="flex:1;">저장 (.json)</button>
+        <label for="projectFileInput" class="btn-ghost" style="flex:1; display:flex; align-items:center; justify-content:center; cursor:pointer; margin:0;">불러오기</label>
+        <input type="file" id="projectFileInput" accept="application/json,.json" style="display:none;">
+      </div>
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;">6페이지 전체(텍스트·테마·레이아웃·배경이미지 포함)를 파일 하나에 저장해요. 나중에 이 파일을 불러오면 그대로 이어서 편집할 수 있어요. 새로고침하면 저장 안 한 내용은 사라지니 참고하세요.</div>
     </div>
 
     <div class="field">
@@ -1127,6 +1137,43 @@ document.querySelectorAll('#pageTabs .layout-btn').forEach(tab => {
   tab.addEventListener('click', () => {
     switchToPage(parseInt(tab.dataset.page, 10));
   });
+});
+
+/* ---------------- PROJECT SAVE / LOAD (all 6 pages as one .json file) ---------------- */
+el('btnSaveProject').addEventListener('click', () => {
+  saveCurrentPageState();
+  const payload = { version: 1, savedAt: new Date().toISOString(), currentPageIndex, pages };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const stamp = new Date().toISOString().slice(0, 10);
+  downloadBlob(blob, 'event-poster-project_' + stamp + '.json');
+});
+
+el('projectFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data || !Array.isArray(data.pages) || data.pages.length === 0){
+        throw new Error('올바른 프로젝트 파일이 아니에요.');
+      }
+      const loaded = [];
+      for (let i = 0; i < 6; i++){
+        loaded.push(data.pages[i] ? Object.assign(makeDefaultPage(false), data.pages[i]) : makeDefaultPage(false));
+      }
+      pages = loaded;
+      currentPageIndex = 0;
+      loadPageState(0);
+      document.querySelectorAll('#pageTabs .layout-btn').forEach((t, i) => t.classList.toggle('active', i === 0));
+    } catch (err) {
+      alert('프로젝트 파일을 불러오는 데 실패했어요: ' + err.message);
+    } finally {
+      el('projectFileInput').value = '';
+    }
+  };
+  reader.readAsText(file);
 });
 
 /* ---------------- BACKGROUND IMAGE ---------------- */
