@@ -541,6 +541,47 @@
 
   .layout-outline .item{ border:1px solid var(--divider-soft,#ccc); border-radius:14px; padding:0.85em 1.05em; background:transparent; }
 
+  .layout-timeline .list{ position:relative; }
+  .layout-timeline .list::before{
+    content:''; position:absolute; left:3px; top:0.4em; bottom:0.4em; width:1px;
+    background:var(--divider-soft,#ccc);
+  }
+  .layout-timeline .item{ position:relative; padding-left:1.5em; }
+  .layout-timeline .item::before{
+    content:''; position:absolute; left:0; top:0.35em; width:7px; height:7px;
+    border-radius:50%; background:currentColor;
+  }
+
+  .layout-bignumber .item{ display:flex; align-items:center; gap:1em; }
+  .layout-bignumber .item-name{ order:2; flex:1; }
+  .layout-bignumber .rows{ order:1; flex-shrink:0; }
+  .layout-bignumber .price-sale{ font-size:1.85em; }
+  .layout-bignumber .price-original{ display:block; }
+
+  .layout-checklist .item{ position:relative; padding-left:1.7em; }
+  .layout-checklist .item::before{
+    content:''; position:absolute; left:0; top:0.16em; width:1em; height:1em;
+    border:1.4px solid currentColor; border-radius:4px; opacity:0.55;
+  }
+  .layout-checklist .item::after{
+    content:'\2713'; position:absolute; left:0.16em; top:0.02em; font-size:0.78em;
+    font-weight:800; opacity:0.85;
+  }
+
+  .layout-compact .item{ margin-bottom:0.45em; }
+  .layout-compact .item-name{ font-size:0.92em; }
+  .layout-compact .rows{ margin-top:0.05em; }
+  .layout-compact .row{ font-size:0.88em; }
+
+  .layout-grid3 .list{ display:grid; grid-template-columns:1fr 1fr 1fr; column-gap:1em; }
+  .layout-grid3 .item{ margin-bottom:0.9em; }
+  .layout-grid3 .item-name{ font-size:0.95em; }
+
+  .layout-tag .row-label{
+    background:var(--item-card-bg,#fff); border-left:3px solid currentColor;
+    padding:0.15em 0.6em; font-weight:700; display:inline-block;
+  }
+
   input[type=range]{ width:100%; accent-color:var(--accent-ui); height:4px; }
 </style>
 </head>
@@ -599,6 +640,12 @@
         <div class="layout-btn" data-layout="layout-grid2">그리드형</div>
         <div class="layout-btn" data-layout="layout-menu">메뉴형</div>
         <div class="layout-btn" data-layout="layout-outline">아웃라인형</div>
+        <div class="layout-btn" data-layout="layout-timeline">타임라인형</div>
+        <div class="layout-btn" data-layout="layout-bignumber">가격강조형</div>
+        <div class="layout-btn" data-layout="layout-checklist">체크리스트형</div>
+        <div class="layout-btn" data-layout="layout-compact">콤팩트형</div>
+        <div class="layout-btn" data-layout="layout-grid3">3열그리드형</div>
+        <div class="layout-btn" data-layout="layout-tag">태그형</div>
       </div>
     </div>
 
