@@ -573,7 +573,10 @@
     </details>
 
     <div class="field">
-      <label>이벤트 내용</label>
+      <label style="display:flex; align-items:center; justify-content:space-between;">
+        <span>이벤트 내용</span>
+        <button type="button" id="btnToggleTextareaSize" style="text-transform:none; font-size:11px; font-weight:600; padding:4px 10px; border-radius:6px; border:1px solid var(--panel-line); background:#0f1013; color:var(--ink-soft); cursor:pointer;">크게 보기</button>
+      </label>
       <textarea id="rawText">#EVENT 2|여름맞이 탄력 SOS|26' 7-8월
 
 - [바디]온다리프팅 [10만줄]
@@ -1197,6 +1200,13 @@ el('btnExportAllPng').addEventListener('click', () => withLoading(el('btnExportA
 
 el('btnRefresh').addEventListener('click', renderCard);
 el('rawText').addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(renderCard, 500); });
+
+let textareaExpanded = false;
+el('btnToggleTextareaSize').addEventListener('click', () => {
+  textareaExpanded = !textareaExpanded;
+  el('rawText').style.height = textareaExpanded ? '640px' : '260px';
+  el('btnToggleTextareaSize').textContent = textareaExpanded ? '작게 보기' : '크게 보기';
+});
 el('brandName').addEventListener('input', renderCard);
 
 /* ---------------- INIT ---------------- */
