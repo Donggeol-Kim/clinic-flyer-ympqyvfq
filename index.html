@@ -883,8 +883,16 @@ function fitContent(){
   // "간격 채우기" mode: content stays anchored at the top, but leftover space below is
   // distributed evenly into the gaps between rows/blocks instead of being left empty.
   if (currentFillMode === 'justify'){
-    const needed = bodyContentEl.scrollHeight;
-    const extra = available - needed;
+    // body-content is flex:1 stretched to fill available space, so its scrollHeight
+    // normally just equals that stretched box height, not the content's true height.
+    // Temporarily let it shrink-wrap to its real content to measure the actual gap.
+    bodyContentEl.style.flexGrow = '0';
+    bodyContentEl.style.flexBasis = 'auto';
+    const naturalHeight = bodyContentEl.scrollHeight;
+    bodyContentEl.style.flexGrow = '';
+    bodyContentEl.style.flexBasis = '';
+
+    const extra = available - naturalHeight;
     if (extra > 4){
       const rows = bodyContentEl.querySelectorAll('.item, hr.divider-mid, table.price-table');
       const gapCount = Math.max(rows.length - 1, 0);
