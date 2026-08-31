@@ -154,7 +154,7 @@
 
   /* ================= CARD BASE (660 x 700 px intrinsic) ================= */
   .card{
-    width:700px; height:990px; position:relative; overflow:hidden;
+    width:700px; height:933px; position:relative; overflow:hidden;
     box-shadow:0 30px 60px -20px rgba(0,0,0,.5);
     display:flex; flex-direction:column;
   }
@@ -169,15 +169,16 @@
   .header{ padding:40px 52px 0 44px; flex-shrink:0; }
   .head-top{ display:flex; justify-content:space-between; align-items:baseline; margin-top:32px; }
   .event-badge{
-    font-size:17px; font-weight:800; letter-spacing:0.03em; padding:4px 0;
+    font-size:20.5px; font-weight:800; letter-spacing:0.03em; padding:4px 0;
   }
-  .period{ font-size:15px; font-weight:600; letter-spacing:0.02em; white-space:nowrap; }
+  .period{ font-size:18px; font-weight:600; letter-spacing:0.02em; white-space:nowrap; }
   .title{ font-size:34px; font-weight:800; line-height:1.16; margin:12px 0 0; letter-spacing:-0.025em; }
 
   .divider-main{ border:none; height:1px; margin:20px 52px 0 44px; flex-shrink:0; }
 
   .body-content{
     padding:24px 52px 8px 44px; flex:1; overflow:hidden; font-size:20px; letter-spacing:-0.012em;
+    display:flex; flex-direction:column; justify-content:center;
   }
   .list{ display:flex; flex-direction:column; }
   .item{ margin-bottom:1.15em; }
@@ -207,11 +208,11 @@
     --item-card-bg:#fffaf0; --item-shadow:rgba(140,100,40,.18); --divider-soft:#d8c7a4; }
   .theme-warm .header{ font-family:'Noto Serif KR',serif; }
   .theme-warm .brand{ color:#a9762f; }
-  .theme-warm .brand-mark{ border-color:#c9964a; color:#a9762f; font-family:'Noto Serif KR',serif;}
+  .theme-warm .brand-mark{ border-color:#c9964a; color:#a9762f; }
   .theme-warm .event-badge{ color:#b9773a; font-family:'Noto Sans KR',sans-serif; }
   .theme-warm .period{ color:#8a6b3d; }
   .theme-warm .title{ font-family:'Noto Serif KR',serif; color:#33291c; }
-  .theme-warm .divider-main{ background:linear-gradient(90deg,#c9964a,transparent 90%); }
+  .theme-warm .divider-main{ background:#c9964a; }
   .theme-warm .item-name{ color:#3a2f22; }
   .theme-warm .tag{ color:#b9773a; }
   .theme-warm .row-label{ color:#8a6b3d; }
@@ -227,17 +228,10 @@
   .theme-mono{ background:#fdfdfc; color:#111214; font-family:'Noto Sans KR',sans-serif; }
   .theme-mono{ background:#fdfdfc; color:#111214; font-family:'Noto Sans KR',sans-serif;
     --item-card-bg:#ffffff; --item-shadow:rgba(0,0,0,.10); --divider-soft:#c7c9ce; position:relative; }
-  .theme-mono.card::before{
-    content:''; position:absolute; inset:20px; pointer-events:none;
-    background:
-      linear-gradient(#111214,#111214) top left / 12px 1.4px no-repeat,
-      linear-gradient(#111214,#111214) top left / 1.4px 12px no-repeat,
-      linear-gradient(#111214,#111214) top right / 12px 1.4px no-repeat,
-      linear-gradient(#111214,#111214) top right / 1.4px 12px no-repeat,
-      linear-gradient(#111214,#111214) bottom left / 12px 1.4px no-repeat,
-      linear-gradient(#111214,#111214) bottom left / 1.4px 12px no-repeat,
-      linear-gradient(#111214,#111214) bottom right / 12px 1.4px no-repeat,
-      linear-gradient(#111214,#111214) bottom right / 1.4px 12px no-repeat;
+  .theme-mono.card{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 990'%3E%3Cg stroke='%23111214' stroke-width='1.4' fill='none'%3E%3Cpath d='M20 32 L20 20 L32 20'/%3E%3Cpath d='M668 20 L680 20 L680 32'/%3E%3Cpath d='M20 958 L20 970 L32 970'/%3E%3Cpath d='M668 970 L680 970 L680 958'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-size:100% 100%;
   }
   .theme-mono .header{ padding-top:30px; }
   .theme-mono .brand{ color:#111214; }
@@ -264,7 +258,7 @@
   .theme-pastel .brand{ color:#a8677a; }
   .theme-pastel .brand-mark{ border-color:#a8677a; background:#fff; color:#a8677a; }
   .theme-pastel .header{ font-family:'Noto Serif KR',serif; }
-  .theme-pastel .event-badge{ color:#a8677a; font-style:italic; font-weight:600; letter-spacing:0.02em; font-size:14px; }
+  .theme-pastel .event-badge{ color:#a8677a; font-style:italic; font-weight:600; letter-spacing:0.02em; font-size:16.8px; }
   .theme-pastel .period{ font-family:'Noto Sans KR',sans-serif; color:#8a7a7c; }
   .theme-pastel .title{ font-family:'Noto Serif KR',serif; font-style:italic; color:#2f2529; font-weight:700; }
   .theme-pastel .divider-main{ background:#e6d2d8; }
@@ -284,11 +278,11 @@
     --item-card-bg:#1a1f2b; --item-shadow:rgba(0,0,0,.4); --divider-soft:#2c3140; }
   .theme-dark .header{ font-family:'Noto Serif KR',serif; }
   .theme-dark .brand{ color:#c9a869; }
-  .theme-dark .brand-mark{ border-color:#c9a869; color:#c9a869; font-family:'Noto Serif KR',serif; }
-  .theme-dark .event-badge{ color:#c9a869; letter-spacing:0.14em; font-size:12.5px; }
+  .theme-dark .brand-mark{ border-color:#c9a869; color:#c9a869; }
+  .theme-dark .event-badge{ color:#c9a869; letter-spacing:0.14em; font-size:15px; }
   .theme-dark .period{ color:#8d94a6; }
   .theme-dark .title{ font-family:'Noto Serif KR',serif; color:#f3efe4; font-weight:700; }
-  .theme-dark .divider-main{ background:linear-gradient(90deg,#c9a869,transparent 85%); }
+  .theme-dark .divider-main{ background:#c9a869; }
   .theme-dark .item-name{ color:#f3efe4; }
   .theme-dark .tag{ color:#c9a869; }
   .theme-dark .row-label{ color:#8d94a6; }
@@ -305,7 +299,7 @@
     --item-card-bg:#fffdf7; --item-shadow:rgba(0,0,0,.08); --divider-soft:#b9b3a2; }
   .theme-editorial .header{ padding-top:30px; border-bottom:none; }
   .theme-editorial .brand{ color:#20201c; text-transform:uppercase; }
-  .theme-editorial .brand-mark{ display:none; }
+  .theme-editorial .brand-mark{ border-color:#20201c; color:#20201c; }
   .theme-editorial .brand-name{ font-size:11px; letter-spacing:0.28em; border-bottom:1px solid #20201c; padding-bottom:4px; }
   .theme-editorial .event-badge{ font-family:'Noto Serif KR',serif; font-style:italic; font-weight:600; color:#8a5a3a; }
   .theme-editorial .period{ font-family:'Space Grotesk',sans-serif; color:#5c5850; }
@@ -329,7 +323,7 @@
   .theme-clinical .header{ font-family:'Space Grotesk',sans-serif; }
   .theme-clinical .brand{ color:#2f6690; }
   .theme-clinical .brand-mark{ border-radius:6px; border-color:#2f6690; color:#2f6690; }
-  .theme-clinical .event-badge{ color:#2f6690; border:1px solid #2f6690; border-radius:4px; padding:4px 10px; display:inline-block; font-size:13px; letter-spacing:0.06em; }
+  .theme-clinical .event-badge{ color:#2f6690; border:1px solid #2f6690; border-radius:4px; padding:4px 10px; display:inline-block; font-size:15.6px; letter-spacing:0.06em; }
   .theme-clinical .period{ color:#5c7789; }
   .theme-clinical .title{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:#1c2b36; text-transform:uppercase; letter-spacing:-0.01em; }
   .theme-clinical .divider-main{ background:#c9d6de; }
@@ -350,7 +344,7 @@
   .theme-coral .header{ font-family:'Space Grotesk',sans-serif; }
   .theme-coral .brand{ color:#e05a3c; }
   .theme-coral .brand-mark{ border-color:#e05a3c; color:#e05a3c; }
-  .theme-coral .event-badge{ color:#e05a3c; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; font-size:14px; }
+  .theme-coral .event-badge{ color:#e05a3c; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; font-size:16.8px; }
   .theme-coral .period{ color:#8a7267; font-weight:700; }
   .theme-coral .title{ font-family:'Space Grotesk',sans-serif; font-weight:800; text-transform:uppercase; letter-spacing:-0.02em; color:#241a15; }
   .theme-coral .divider-main{ background:#e05a3c; height:3px; }
@@ -370,8 +364,8 @@
     --item-card-bg:#fdfcf7; --item-shadow:rgba(80,100,60,.14); --divider-soft:#d9dcc9; }
   .theme-botanical .header{ font-family:'Noto Serif KR',serif; }
   .theme-botanical .brand{ color:#6b7f5e; }
-  .theme-botanical .brand-mark{ border-color:#6b7f5e; color:#6b7f5e; font-family:'Noto Serif KR',serif; }
-  .theme-botanical .event-badge{ color:#6b7f5e; font-size:13px; letter-spacing:0.08em; }
+  .theme-botanical .brand-mark{ border-color:#6b7f5e; color:#6b7f5e; }
+  .theme-botanical .event-badge{ color:#6b7f5e; font-size:15.6px; letter-spacing:0.08em; }
   .theme-botanical .period{ color:#7c8468; }
   .theme-botanical .title{ font-family:'Noto Serif KR',serif; font-weight:700; color:#2b2e22; }
   .theme-botanical .divider-main{ background:#c7cdb2; }
@@ -398,7 +392,7 @@
   .theme-labnote .header{ font-family:'Space Grotesk',sans-serif; }
   .theme-labnote .brand{ color:#23241f; }
   .theme-labnote .brand-mark{ border-radius:3px; border-color:#23241f; }
-  .theme-labnote .event-badge{ color:#b33a2e; border:1px dashed #b33a2e; padding:3px 9px; display:inline-block; font-size:13px; letter-spacing:0.05em; }
+  .theme-labnote .event-badge{ color:#b33a2e; border:1px dashed #b33a2e; padding:3px 9px; display:inline-block; font-size:15.6px; letter-spacing:0.05em; }
   .theme-labnote .period{ font-family:'Space Grotesk',sans-serif; color:#6b6a5f; }
   .theme-labnote .title{ font-weight:800; letter-spacing:-0.015em; color:#1a1b17; }
   .theme-labnote .divider-main{ background:#23241f; }
@@ -415,14 +409,14 @@
 
   /* ================= THEME: DEEP BURGUNDY ATELIER ================= */
   .theme-burgundy{ background:linear-gradient(160deg,#f8f2ee 0%,#f1e6e0 100%); color:#2b1a1a; font-family:'Noto Sans KR',sans-serif;
-    --item-card-bg:#fffaf7; --item-shadow:rgba(110,36,56,.16); --divider-soft:#e2cfc9; }
+    --item-card-bg:#ffffff; --item-shadow:rgba(110,36,56,.22); --divider-soft:#e2cfc9; }
   .theme-burgundy .header{ font-family:'Noto Serif KR',serif; }
   .theme-burgundy .brand{ color:#6e2438; }
-  .theme-burgundy .brand-mark{ border-color:#6e2438; color:#6e2438; font-family:'Noto Serif KR',serif; }
-  .theme-burgundy .event-badge{ color:#6e2438; letter-spacing:0.1em; font-size:13px; }
+  .theme-burgundy .brand-mark{ border-color:#6e2438; color:#6e2438; }
+  .theme-burgundy .event-badge{ color:#6e2438; letter-spacing:0.1em; font-size:15.6px; }
   .theme-burgundy .period{ color:#8a6a63; }
   .theme-burgundy .title{ font-family:'Noto Serif KR',serif; font-weight:800; color:#241313; }
-  .theme-burgundy .divider-main{ background:linear-gradient(90deg,#6e2438,transparent 85%); }
+  .theme-burgundy .divider-main{ background:#6e2438; }
   .theme-burgundy .item-name{ color:#2b1a1a; }
   .theme-burgundy .tag{ color:#6e2438; font-weight:600; }
   .theme-burgundy .row-label{ color:#8a6a63; }
@@ -458,6 +452,7 @@
   .layout-cards .item{
     background:var(--item-card-bg,#fff);
     box-shadow:0 8px 20px -10px var(--item-shadow, rgba(0,0,0,.15));
+    border:1px solid rgba(0,0,0,.055);
     border-radius:18px; padding:0.9em 1.1em;
   }
   .layout-row .item{ display:flex; gap:1.2em; align-items:baseline; }
@@ -528,7 +523,7 @@
 
     <div class="field">
       <label>전체 글자 크기 <span id="scaleLabel" style="color:var(--ink); text-transform:none;">100%</span></label>
-      <input type="range" id="fontScale" min="70" max="140" step="5" value="100">
+      <input type="range" id="fontScale" min="70" max="170" step="5" value="100">
       <div style="font-size:10.5px; color:var(--ink-soft); margin-top:5px; line-height:1.5;">100%는 카드에 딱 맞는 자동 크기예요. 더 키우면 내용이 카드 밖으로 넘칠 수 있어요.</div>
     </div>
 
@@ -605,6 +600,7 @@
         <option value="4" selected>고화질 (4x · 약 340dpi)</option>
         <option value="6">최고화질 (6x · 약 510dpi)</option>
       </select>
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;">기기에 따라 안전한 한도까지 자동으로 낮춰서 저장돼요.</div>
     </div>
 
     <div class="btnbar">
@@ -620,7 +616,7 @@
 
   <div class="stage-wrap">
     <div class="stage-inner">
-      <div class="stage-caption">카드 크기 <b>A4 (210&nbsp;×&nbsp;297&nbsp;mm)</b> 비율</div>
+      <div class="stage-caption">카드 크기 <b>210&nbsp;×&nbsp;280&nbsp;mm</b></div>
       <div class="preview-stage" id="previewStage">
         <div class="preview-zoom" id="zoomWrap">
           <div class="card theme-warm layout-stack" id="card">
@@ -916,10 +912,10 @@ const zoomWrap = el('zoomWrap');
 function recomputeZoom(){
   const wrapWidth = document.querySelector('.stage-wrap').clientWidth - 32;
   const wrapHeight = window.innerHeight - 140;
-  const zoom = Math.min(wrapWidth / 700, wrapHeight / 990, 1);
+  const zoom = Math.min(wrapWidth / 700, wrapHeight / 933, 1);
   zoomWrap.style.transform = `scale(${zoom})`;
   stage.style.width = (700 * zoom) + 'px';
-  stage.style.height = (990 * zoom) + 'px';
+  stage.style.height = (933 * zoom) + 'px';
 }
 window.addEventListener('resize', recomputeZoom);
 
@@ -928,7 +924,15 @@ function fileNameBase(){
   const t = el('titleOut').textContent.trim() || 'event-poster';
   return t.replace(/[^\w가-힣\-]+/g,'_').slice(0,40);
 }
-function qualityScale(){ return parseInt(el('quality').value, 10); }
+function qualityScale(){
+  const requested = parseInt(el('quality').value, 10) || 4;
+  const w = cardEl.offsetWidth || 700;
+  const h = cardEl.offsetHeight || 933;
+  // Stay safely under common mobile browser canvas area limits (iOS Safari caps around ~16.7M px)
+  const maxPixels = 15000000;
+  const maxScale = Math.max(1, Math.floor(Math.sqrt(maxPixels / (w * h))));
+  return Math.min(requested, maxScale);
+}
 
 async function captureCanvas(transparent){
   return await html2canvas(cardEl, {
@@ -959,7 +963,12 @@ async function withLoading(button, fn){
     await fn();
   } catch (err) {
     console.error(err);
-    alert('저장에 실패했어요: ' + (err && err.message ? err.message : err) + '\n\n모바일 브라우저(특히 인앱 브라우저)에서는 다운로드가 막힐 수 있어요. Safari/Chrome 앱에서 직접 열어서 다시 시도해보세요.');
+    const msg = (err && err.message) ? err.message : String(err);
+    let hint = '모바일 브라우저(특히 인앱 브라우저)에서는 다운로드가 막힐 수 있어요. Safari/Chrome 앱에서 직접 열어서 다시 시도해보세요.';
+    if (/createPattern|width or height of 0/i.test(msg)) {
+      hint = '이미지 해상도가 기기 한도를 넘었을 수 있어요. "내보내기 화질"을 표준이나 고화질로 낮추고 다시 시도해보세요.';
+    }
+    alert('저장에 실패했어요: ' + msg + '\n\n' + hint);
   } finally {
     button.disabled = false;
     button.style.opacity = '';
@@ -994,8 +1003,8 @@ el('btnPdf').addEventListener('click', () => withLoading(el('btnPdf'), async () 
   const canvas = await captureCanvas(false);
   const imgData = canvas.toDataURL('image/png', 1.0);
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [210, 280] });
+  pdf.addImage(imgData, 'PNG', 0, 0, 210, 280, undefined, 'FAST');
   pdf.save(fileNameBase() + '.pdf');
 }));
 
