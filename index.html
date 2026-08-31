@@ -178,7 +178,7 @@
 
   .body-content{
     padding:24px 52px 8px 44px; flex:1; overflow:hidden; font-size:20px; letter-spacing:-0.012em;
-    display:flex; flex-direction:column; justify-content:center;
+    display:flex; flex-direction:column; justify-content:flex-start;
   }
   .list{ display:flex; flex-direction:column; }
   .item{ margin-bottom:1.15em; }
@@ -522,6 +522,15 @@
     </div>
 
     <div class="field">
+      <label>내용 채우기 방식</label>
+      <div class="layout-grid" id="fillGrid" style="grid-template-columns:repeat(2,1fr);">
+        <div class="layout-btn active" data-fill="fixed">고정 간격</div>
+        <div class="layout-btn" data-fill="justify">간격 채우기</div>
+      </div>
+      <div style="font-size:10.5px; color:var(--ink-soft); margin-top:6px; line-height:1.5;">고정 간격: 항상 맨 위부터 정해진 간격으로 채워요. 간격 채우기: 내용이 적으면 줄 사이 여백을 넓혀서 카드 아래까지 균등하게 채워요.</div>
+    </div>
+
+    <div class="field">
       <label>전체 글자 크기 <span id="scaleLabel" style="color:var(--ink); text-transform:none;">100%</span></label>
       <input type="range" id="fontScale" min="70" max="170" step="5" value="100">
       <div style="font-size:10.5px; color:var(--ink-soft); margin-top:5px; line-height:1.5;">100%는 카드에 딱 맞는 자동 크기예요. 더 키우면 내용이 카드 밖으로 넘칠 수 있어요.</div>
@@ -821,6 +830,25 @@ function fitContent(){
   const scalePct = parseInt(el('fontScale').value, 10) || 100;
   fontSize = fontSize * (scalePct / 100);
   bodyContentEl.style.fontSize = fontSize.toFixed(2) + 'px';
+
+  // "간격 채우기" mode: content stays anchored at the top, but leftover space below is
+  // distributed evenly into the gaps between rows/blocks instead of being left empty.
+  if (currentFillMode === 'justify'){
+    const needed = bodyContentEl.scrollHeight;
+    const extra = available - needed;
+    if (extra > 4){
+      const rows = bodyContentEl.querySelectorAll('.item, hr.divider-mid, table.price-table');
+      const gapCount = Math.max(rows.length - 1, 0);
+      if (gapCount > 0){
+        const extraPerGap = extra / gapCount;
+        rows.forEach((row, idx) => {
+          if (idx === rows.length - 1) return; // don't push space after the last row
+          const currentMb = parseFloat(getComputedStyle(row).marginBottom) || 0;
+          row.style.marginBottom = (currentMb + extraPerGap) + 'px';
+        });
+      }
+    }
+  }
 }
 
 function renderCard(){
@@ -843,9 +871,10 @@ function renderCard(){
   requestAnimationFrame(fitContent);
 }
 
-/* ---------------- THEME / LAYOUT SWITCH ---------------- */
+/* ---------------- THEME / LAYOUT / FILL-MODE SWITCH ---------------- */
 let currentColorTheme = 'theme-warm';
 let currentLayout = 'layout-stack';
+let currentFillMode = 'fixed';
 function applyCardClass(){
   cardEl.className = 'card ' + currentColorTheme + ' ' + currentLayout;
 }
@@ -858,12 +887,20 @@ document.querySelectorAll('.theme-swatch').forEach(sw => {
     renderCard();
   });
 });
-document.querySelectorAll('.layout-btn').forEach(btn => {
+document.querySelectorAll('#layoutGrid .layout-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#layoutGrid .layout-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     currentLayout = btn.dataset.layout;
     applyCardClass();
+    renderCard();
+  });
+});
+document.querySelectorAll('#fillGrid .layout-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#fillGrid .layout-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFillMode = btn.dataset.fill;
     renderCard();
   });
 });
